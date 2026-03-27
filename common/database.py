@@ -10,12 +10,14 @@ class TicketDB:
             decode_responses=True
         )
         self.limit_unnumbered = 20000
+        self.limit_numbered = 20000
 
     def buy_unnumbered(self, client_id, request_id):
 
         # Redis format K:V
         if self.redis_client.exists(f"req:{request_id}"):
-            return {"status": "ALREADY_PROCESSED"}
+            owner = self.redis_client.get(f"req:{request_id}")
+            return {"status": "ALREADY_PROCESSED", "owner": owner}
 
         current = self.redis_client.incr("count:unnumbered")
 
@@ -27,13 +29,18 @@ class TicketDB:
 
     def buy_numbered(self, client_id, seat_id, request_id):
 
+        s_id = int(seat_id)
+        if s_id < 1 or s_id > self.limit_numbered:
+            return {"status": "INVALID_SEAT", "err": "seat_id out of range"}
+
         # Redis format K:V
         if self.redis_client.exists(f"req:{request_id}"):
-            return {"status": "ALREADY_PROCESSED"}
+            owner = self.redis_client.get(f"req:{request_id}")
+            return {"status": "ALREADY_PROCESSED", "owner": owner}
 
         # Check if seat is already Taken (K,V ==> "seat:XX", "userXXX")
         if self.redis_client.setnx(f"seat:{seat_id}", client_id):
-            self.redis_client.set(f"req:{request_id}", "DONE")
+            self.redis_client.set(f"req:{request_id}", client_id)
             return {"status": "SUCCESS"}
         else:
             return {"status": "OCCUPIED"}
