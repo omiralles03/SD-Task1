@@ -9,4 +9,4 @@ COPY . .
 
 ENV PYTHONPATH=/app
 
-CMD ["python", "indirect_communication/consumer.py"]
+CMD ["python", "-u", "indirect_communication/consumer.py"]

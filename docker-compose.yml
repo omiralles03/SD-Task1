@@ -31,6 +31,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - RABBIT_HOST=rabbitmq
+      - PYTHONUNBUFFERED=1
       # AWS: docker-compose up --scale worker=3
     restart: always
 volumes:
