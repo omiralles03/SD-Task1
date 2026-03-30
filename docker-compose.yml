@@ -4,12 +4,34 @@ services:
     container_name: redis_server
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data # Failure tolerance
     command: redis-server --save 60 1 --loglevel warning
     restart: always
   rabbitmq:
     image: rabbitmq:4.0-management-alpine
     container_name: rabbitmq_server
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "5672:5672" # Data
+      - "15672:15672" # Web management
     restart: always
+  worker:
+    build: .
+    # container_name: ticket_worker
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - REDIS_HOST=redis
+      - RABBIT_HOST=rabbitmq
+      # AWS: docker-compose up --scale worker=3
+    restart: always
+volumes:
+  redis_data:
