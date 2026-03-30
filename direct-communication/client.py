@@ -2,18 +2,18 @@ import asyncio
 import httpx
 import time
 import os
+import sys
 
-URL_BASE = "http://127.0.0.1:8000" 
+URL_BASE = "http://127.0.0.1:80" 
 MAX_CONCURRENTE = 100 
 
 async def send_request(client, line, url_base, semaphore):
-    async with semaphore: # Limitar peticiones concurrentes
+    async with semaphore: 
         parts = line.strip().split()
         
         if not parts or parts[0].upper() != "BUY":
             return None
 
-        # Comprobar parámetros de petición
         if len(parts) == 3:
             _, c_id, r_id = parts
             params = {"client_id": c_id, "request_id": r_id}
@@ -34,36 +34,30 @@ async def send_request(client, line, url_base, semaphore):
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
-async def run_benchmark(filename):
-    file_path = os.path.join("..", "benchmarks", filename)
-    
+async def run_benchmark(file_path):
     if not os.path.exists(file_path):
         print(f"Error: No se encuentra el archivo en {os.path.abspath(file_path)}")
         return
 
     semaphore = asyncio.Semaphore(MAX_CONCURRENTE)
-    
     metrics = {"success": 0, "rejected": 0, "error": 0, "total": 0}
 
     async with httpx.AsyncClient(timeout=None) as client:
-        print(f"Iniciando benchmark: {filename}...")
+        print(f"Iniciando benchmark: {file_path}...")
         start_time = time.perf_counter()
         
         tasks = set()
         
         with open(file_path, 'r') as f:
             for line in f:
-                # Esperar si se alcanza el límite
                 if len(tasks) >= MAX_CONCURRENTE:
                     done, tasks = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
                     for t in done:
                         process_result(t.result(), metrics)
 
-                # Crear tarea para la línea actual
                 new_task = asyncio.create_task(send_request(client, line, URL_BASE, semaphore))
                 tasks.add(new_task)
 
-        # Esperar a que terminen las últimas tareas pendientes
         if tasks:
             done, _ = await asyncio.wait(tasks)
             for t in done:
@@ -72,9 +66,8 @@ async def run_benchmark(filename):
         end_time = time.perf_counter()
         total_time = end_time - start_time
         
-        print_statistics(filename, total_time, metrics)
+        print_statistics(file_path, total_time, metrics)
 
-# Procesar contadores
 def process_result(result, metrics):
     if result is None:
         return
@@ -100,5 +93,9 @@ def print_statistics(filename, total_time, metrics):
     print("="*40 + "\n")
 
 if __name__ == "__main__":
-    archivo_test = "benchmark_unnumbered_20000.txt"
-    asyncio.run(run_benchmark(archivo_test))
+    if len(sys.argv) < 2:
+        print("Uso: python3 client.py <benchmark>")
+        sys.exit(1)
+
+    path_argumento = sys.argv[1]
+    asyncio.run(run_benchmark(path_argumento))
