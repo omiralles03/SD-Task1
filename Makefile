@@ -27,3 +27,7 @@ status:
 	docker exec -it $(RABBIT_CONTAINER) rabbitmqctl list_queues
 	@echo -e "\n--- Redis Keys Count ---"
 	docker exec -it $(REDIS_CONTAINER) redis-cli dbsize
+	@echo -e "\n--- Redis Keys Reqs: ---"
+	docker exec -it $(REDIS_CONTAINER) redis-cli --scan --pattern "req:*" | wc -l
+	@echo -e "\n--- Redis Keys Seats: ---"
+	docker exec -it $(REDIS_CONTAINER) redis-cli --scan --pattern "seat:*" | wc -l
