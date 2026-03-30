@@ -35,6 +35,8 @@ services:
       redis:
         condition: service_started
     restart: always
+    environment:
+      - REDIS_HOST=redis
   worker_indirect:
     build: .
     command: python indirect_communication/consumer.py

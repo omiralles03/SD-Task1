@@ -10,7 +10,7 @@ db = TicketDB()
 
 @app.post("/buy/unnumbered")
 async def buy_unnumbered(client_id: str, request_id: str):
-    result = db.buy_unnumbered(client_id, request_id)
+    result = await db.buy_unnumbered(client_id, request_id)
     
     if result["status"] == "SUCCESS":
         return {"status": "success", "ticket": result["ticket"]}
@@ -23,7 +23,7 @@ async def buy_unnumbered(client_id: str, request_id: str):
 
 @app.post("/buy/numbered")
 async def buy_numbered(client_id: str, seat_id: int, request_id: str):
-    result = db.buy_numbered(client_id, seat_id, request_id)
+    result = await db.buy_numbered(client_id, seat_id, request_id)
     
     if result["status"] == "SUCCESS":
         return {"status": "success", "seat_id": seat_id}
