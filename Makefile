@@ -10,6 +10,9 @@ help:
 	@echo "  make purge-rabbit - Empty RabbitMQ queue"
 	@echo "  make clear-all    - Clean Redis + RabbitMQ"
 	@echo "  make status       - Show queue and key count"
+	@echo "  make get-req id=id"
+	@echo "  make get-seat id=id"
+	@echo "  make get key=key"
 
 flush-redis:
 	@echo "Cleaning Redis..."
@@ -22,6 +25,15 @@ purge-rabbit:
 clear-all: flush-redis purge-rabbit
 	@echo "Everything is clean! ✨"
 
+get-req:
+	@docker exec -it $(REDIS_CONTAINER) redis-cli GET "req:$(id)"
+
+get-seat:
+	@docker exec -it $(REDIS_CONTAINER) redis-cli GET "seat:$(id)"
+
+get:
+	@docker exec -it $(REDIS_CONTAINER) redis-cli GET "$(key)"
+
 status:
 	@echo "--- RabbitMQ Queues ---"
 	docker exec -it $(RABBIT_CONTAINER) rabbitmqctl list_queues
@@ -31,3 +43,5 @@ status:
 	docker exec -it $(REDIS_CONTAINER) redis-cli --scan --pattern "req:*" | wc -l
 	@echo -e "\n--- Redis Keys Seats: ---"
 	docker exec -it $(REDIS_CONTAINER) redis-cli --scan --pattern "seat:*" | wc -l
+	@echo -e "\n--- Redis Keys Count: ---"
+	docker exec -it $(REDIS_CONTAINER) redis-cli GET "count:unnumbered"
