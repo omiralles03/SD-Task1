@@ -21,3 +21,23 @@ def parse_benchmark_line(line):
             "request_id": parts[2]
         }
     return None
+
+
+# Formatter for debugging
+def format_result_msg(result):
+    status = result['status']
+    msg = f" [<-] Result: {result['status']}"
+
+    details = {
+        "SUCCESS": lambda r: f" (Ticket #: {r.get('ticket')})",
+        "CONFIRMED": lambda r: f" (Ticket #: {r.get('ticket')} already yours ({r.get('owner')})",
+        "ALREADY_PROCESSED": lambda r: f" (Owned by: {r.get('owner')})",
+        "OCCUPIED": lambda r: f" (Seat {r.get('seat_id')} owned by {r.get('owner')})",
+        "INVALID_SEAT": lambda r: f" (Seat {r.get('seat_id')} out of range. Limit: 1 - {r.get('limit')})",
+        "SOLD_OUT": lambda r: f" (Limit {r.get('limit')} reached (current: {r.get('current')})"
+    }
+    
+    if status in details:
+        msg += details[status](result)
+    
+    return msg
