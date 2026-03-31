@@ -40,7 +40,7 @@ async def run_benchmark(file_path):
         return
 
     semaphore = asyncio.Semaphore(MAX_CONCURRENTE)
-    metrics = {"success": 0, "rejected": 0, "error": 0, "total": 0}
+    metrics = {"success": 0, "duplicated": 0, "rejected": 0, "error": 0, "total": 0}
 
     async with httpx.AsyncClient(timeout=None) as client:
         print(f"Iniciando benchmark: {file_path}...")
@@ -76,6 +76,9 @@ def process_result(result, metrics):
     status = result.get("status")
     if status == "success":
         metrics["success"] += 1
+    elif status == "success2":
+        metrics["success"] += 1
+        metrics["duplicated"] += 1
     elif status == "rejected":
         metrics["rejected"] += 1
     else:
@@ -88,6 +91,7 @@ def print_statistics(filename, total_time, metrics):
     print(f"Tiempo total:      {total_time:.2f} s")
     print(f"Throughput:        {metrics['total']/total_time:.2f} ops/s")
     print(f"Operaciones éxito: {metrics['success']}")
+    print(f"Operaciones duplicadas: {metrics['duplicated']}")
     print(f"Operaciones rechazo: {metrics['rejected']}")
     print(f"Errores de red:    {metrics['error']}")
     print("="*40 + "\n")
