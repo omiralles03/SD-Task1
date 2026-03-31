@@ -1,28 +1,10 @@
 from redis.exceptions import ExecAbortError
 from common.config import RABBIT_HOST
 from common.database import TicketDB
+from common.parser import format_result_msg
 
 import pika
 import json
-
-def format_result_msg(result):
-    status = result['status']
-    msg = f" [<-] Result: {result['status']}"
-
-    details = {
-        "SUCCESS": lambda r: f" (Ticket #: {r.get('ticket')})",
-        "CONFIRMED": lambda r: f" (Ticket #: {r.get('ticket')} already yours ({r.get('owner')})",
-        "ALREADY_PROCESSED": lambda r: f" (Owned by: {r.get('owner')})",
-        "OCCUPIED": lambda r: f" (Seat {r.get('seat_id')} owned by {r.get('owner')})",
-        "INVALID_SEAT": lambda r: f" (Seat {r.get('seat_id')} out of range. Limit: 1 - {r.get('limit')})",
-        "SOLD_OUT": lambda r: f" (Limit {r.get('limit')} reached (current: {r.get('current')})"
-    }
-    
-    if status in details:
-        msg += details[status](result)
-    
-    return msg
-
 
 # Called everytime a message arrives from RabbitMQ
 # Parses the JSON message from the queue and calls the correct DB method
