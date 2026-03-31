@@ -22,7 +22,10 @@ purge-rabbit:
 	@echo "Purging RabbitMQ queue: $(QUEUE_NAME)..."
 	docker exec -it $(RABBIT_CONTAINER) rabbitmqctl purge_queue $(QUEUE_NAME)
 
-clear-all: flush-redis purge-rabbit
+clear-redis: flush-redis
+	@echo "Everything is clean! ✨"
+
+clear-rabbit: purge-rabbit
 	@echo "Everything is clean! ✨"
 
 get-req:
@@ -34,9 +37,11 @@ get-seat:
 get:
 	@docker exec -it $(REDIS_CONTAINER) redis-cli GET "$(key)"
 
-status:
+status-rabbit:
 	@echo "--- RabbitMQ Queues ---"
 	docker exec -it $(RABBIT_CONTAINER) rabbitmqctl list_queues
+
+status-redis:
 	@echo -e "\n--- Redis Keys Count ---"
 	docker exec -it $(REDIS_CONTAINER) redis-cli dbsize
 	@echo -e "\n--- Redis Keys Reqs: ---"
@@ -45,3 +50,4 @@ status:
 	docker exec -it $(REDIS_CONTAINER) redis-cli --scan --pattern "seat:*" | wc -l
 	@echo -e "\n--- Redis Keys Count: ---"
 	docker exec -it $(REDIS_CONTAINER) redis-cli GET "count:unnumbered"
+
