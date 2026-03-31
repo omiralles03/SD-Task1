@@ -27,8 +27,8 @@ services:
     volumes:
       - ./direct-communication/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - worker_direct
-  worker_direct:
+      - worker
+  worker:
     build: .
     command: uvicorn direct-communication.worker:app --host 0.0.0.0 --port 8000
     depends_on:
@@ -36,8 +36,9 @@ services:
         condition: service_started
     restart: always
     environment:
+      - PYTHONUNBUFFERED=1
       - REDIS_HOST=redis
-  worker_indirect:
+  consumer:
     build: .
     command: python indirect_communication/consumer.py
     # container_name: ticket_worker
@@ -50,7 +51,6 @@ services:
       - REDIS_HOST=redis
       - RABBIT_HOST=rabbitmq
       - PYTHONUNBUFFERED=1
-      # AWS: docker-compose up --scale worker=3
     restart: always
 volumes:
   redis_data:
