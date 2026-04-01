@@ -19,7 +19,7 @@ class TicketDB:
                 decode_responses=True
         )
 
-        self.limit_unnumbered = 3
+        self.limit_unnumbered = 20000
         self.limit_numbered = 20000
 
     def buy_unnumbered(self, client_id, request_id):
