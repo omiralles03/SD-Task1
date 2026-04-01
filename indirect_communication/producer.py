@@ -5,12 +5,18 @@ import pika
 import json
 import sys
 
-def start_producer(benchmark):
+def start_producer(benchmark, num_consumers):
     try:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBIT_HOST))
         
         channel = connection.channel()
         channel.queue_declare(queue='ticket_queue', durable=True)
+
+        # Benchmark start msg
+        for _ in range (num_consumers):
+            channel.basic_publish( exchange='', routing_key='ticket_queue',
+                body=json.dumps({"action": "START"}),
+            )
 
         print(f" [*] Reading file: {benchmark}")
 
@@ -36,6 +42,13 @@ def start_producer(benchmark):
                         print(f" [x] Sent {count} requests...")
 
         print(f" [v] Finished! Total sent: {count} messages.")
+
+        # Benchmark finish msg
+        for _ in range (num_consumers):
+            channel.basic_publish( exchange='', routing_key='ticket_queue',
+                body=json.dumps({"action": "FINISH"}),
+            )
+
         connection.close()
 
     except FileNotFoundError:
@@ -47,9 +60,10 @@ def start_producer(benchmark):
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(f" [!] Error: Invalid arguments.")
-        print(f" [>] Usage: python3 producer.py <benchmark>.")
+        print(f" [>] Usage: python3 producer.py <benchmark> [num_consumers].")
         sys.exit(1)
     
     benchmark = sys.argv[1]
-    start_producer(benchmark)
+    num_consumers = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+    start_producer(benchmark, num_consumers)
 
